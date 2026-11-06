@@ -136,6 +136,7 @@ class DicomReader(QMainWindow):
             stored_password_hash = result[0]
             try:
                 self.ph.verify(stored_password_hash, password)
+                cur.execute(utils.bd_requests.logout_request)
                 cur.execute(utils.bd_requests.check_login_, (login,))
                 con.commit()
                 today = datetime.now(ZoneInfo("Europe/Moscow"))
@@ -276,11 +277,7 @@ class DicomReader(QMainWindow):
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )
-            y = round(
-                (self.page1.sliceSlider.value() - 0.5)
-                * pixmap.height()
-                / len(self.list_files)
-            )
+            y = round((self.page1.sliceSlider.value() - 0.5) * pixmap.height() / len(self.list_files))
             painter = QPainter(pixmap)
             painter.setPen(QPen(Qt.GlobalColor.white, 2))
             painter.drawLine(0, y, pixmap.width() - 1, y)
@@ -312,14 +309,11 @@ class DicomReader(QMainWindow):
             self.page1.patientBD.setText("—")
             self.page1.modality.setText("—")
             return
-
         self.page1.patientName.setText(str(ds.get("PatientName") or "—"))
         self.page1.patientID.setText(str(ds.get("PatientID") or "—"))
         birth_date = str(ds.get("PatientBirthDate") or "")
         if len(birth_date) == 8 and birth_date.isdigit():
-            self.page1.patientBD.setText(
-                f"{birth_date[6:8]}.{birth_date[4:6]}.{birth_date[:4]}"
-            )
+            self.page1.patientBD.setText(f"{birth_date[6:8]}.{birth_date[4:6]}.{birth_date[:4]}")
         else:
             self.page1.patientBD.setText("—")
         self.page1.modality.setText(str(ds.get("Modality") or "—"))
