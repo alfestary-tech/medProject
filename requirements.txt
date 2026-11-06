@@ -1,0 +1,8 @@
+argon2-cffi==25.1.0
+numpy==2.5.2
+pydicom==3.0.2
+PyQt6==6.12.0
+matplotlib==3.11.2
+opencv-python-headless==4.14.0.94
+scikit-image==0.26.0
+scipy==1.18.1
