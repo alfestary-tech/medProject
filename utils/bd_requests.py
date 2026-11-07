@@ -1,4 +1,4 @@
-login_request ="""
+login_request = """
     SELECT login
     FROM account
     WHERE acs_active = 1
@@ -38,7 +38,7 @@ file_add_ = """
     VALUES (?, ?)
 """
 
-сheck_file_ = """
+check_file_ = """
     SELECT fileName
     FROM files
     WHERE filePath = ?
@@ -63,4 +63,3 @@ check_date_ = """
     FROM account
     WHERE acs_active = 1
 """
-
