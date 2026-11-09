@@ -532,11 +532,29 @@
     </property>
     <addaction name="actionOpenFolder" />
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>Вид</string>
+    </property>
+    <addaction name="actionRepeatView" />
+    <addaction name="actionConstantView" />
+   </widget>
    <addaction name="menuFile" />
+   <addaction name="menuView" />
   </widget>
   <action name="actionOpenFolder">
    <property name="text">
     <string>Открыть папку</string>
+   </property>
+  </action>
+  <action name="actionRepeatView">
+   <property name="text">
+    <string>Повторение вида</string>
+   </property>
+  </action>
+  <action name="actionConstantView">
+   <property name="text">
+    <string>Постоянный вид</string>
    </property>
   </action>
  </widget>

@@ -50,13 +50,22 @@ class DicomReader(QMainWindow):
         self.dose_pixmap = None
         self.front_image = None
         self.side_image = None
+        self.image_filter = 0
+        self.last_image_tab = 0
         self.page1.imageLabel.installEventFilter(self)
         self.page1.maskLabel.installEventFilter(self)
         self.page1.doseLabel.installEventFilter(self)
         self.page1.firstSideLabel.installEventFilter(self)
         self.page1.secondSideLabel.installEventFilter(self)
         self.page1.windowList.currentChanged.connect(self.update_slice_pixmap)
+        self.page1.windowList.currentChanged.connect(self.opened_tab)
         self.page1.actionOpenFolder.triggered.connect(self.load_folder)
+        self.page1.actionConstantView.triggered.connect(
+            self.show_ct_side_views
+        )
+        self.page1.actionRepeatView.triggered.connect(
+            self.show_md_side_views
+        )
         self.page1.sliceSlider.setMinimum(1)
         self.page1.sliceSlider.setMaximum(1)
         self.page1.sliceCounter.setText("Срез: 0 / 0")
@@ -309,6 +318,22 @@ class DicomReader(QMainWindow):
             self.folder or "Папка не выбрана", 5000
         )
 
+    def show_ct_side_views(self):
+        self.image_filter = 0
+        if self.cts is not None:
+            self.build_projection_views()
+
+    def show_md_side_views(self):
+        self.image_filter = 1
+        if self.cts is not None:
+            self.build_projection_views()
+
+    def opened_tab(self, index):
+        if index in (0, 1, 2):
+            self.last_image_tab = index
+        if self.image_filter == 1 and self.cts is not None:
+            self.build_projection_views()
+
     def open_file(self, item):
         if not self.check_active_session():
             return
@@ -362,16 +387,39 @@ class DicomReader(QMainWindow):
         self.update_last_date()
 
     def build_projection_views(self):
-        front_pixels = self.cts[:, self.cts.shape[1] // 2, :]
-        side_pixels = self.cts[:, :, self.cts.shape[2] // 2]
-        front_min, front_max = np.percentile(front_pixels, (1, 99))
-        side_min, side_max = np.percentile(side_pixels, (1, 99))
-        self.front_image = self.array_to_image(
-            front_pixels, front_min, front_max
-        )
-        self.side_image = self.array_to_image(
-            side_pixels, side_min, side_max
-        )
+        volume = self.cts
+        if self.image_filter == 1:
+            if self.last_image_tab == 1:
+                volume = self.masks.any(axis=1)
+            elif self.last_image_tab == 2:
+                volume = self.doses
+
+        front_pixels = volume[:, volume.shape[1] // 2, :]
+        side_pixels = volume[:, :, volume.shape[2] // 2]
+
+        if self.image_filter == 1 and self.last_image_tab == 1:
+            self.front_image = self.pixels_to_image(
+                front_pixels.astype(np.uint8) * 255
+            )
+            self.side_image = self.pixels_to_image(
+                side_pixels.astype(np.uint8) * 255
+            )
+        elif self.image_filter == 1 and self.last_image_tab == 2:
+            self.front_image = self.array_to_image(
+                front_pixels, 0, self.dose_max
+            )
+            self.side_image = self.array_to_image(
+                side_pixels, 0, self.dose_max
+            )
+        else:
+            front_min, front_max = np.percentile(front_pixels, (1, 99))
+            side_min, side_max = np.percentile(side_pixels, (1, 99))
+            self.front_image = self.array_to_image(
+                front_pixels, front_min, front_max
+            )
+            self.side_image = self.array_to_image(
+                side_pixels, side_min, side_max
+            )
         self.update_projection_views()
 
     def update_projection_views(self):
