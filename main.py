@@ -1,4 +1,5 @@
 import sqlite3
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +14,7 @@ from PyQt6.QtCore import QEvent
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QStackedWidget)
 import utils.bd_requests
 import utils.dicom_func
+from utils.db_path import get_db_path
 from parser.parser import prepare_all_data
 
 
@@ -75,7 +77,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.page1.folderButton.clicked.connect(self.show_folder_path)
         self.ph = PasswordHasher()
         self.check_active_session()
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         cur = con.cursor()
         result = cur.execute(utils.bd_requests.login_request).fetchone()
         con.close()
@@ -92,7 +94,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
                 "Введите логин и пароль", 5000
             )
             return
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         try:
             cur = con.cursor()
             result = cur.execute(
@@ -126,7 +128,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
 
     def log_out(self):
         self.clear_session_view()
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         cur = con.cursor()
         cur.execute(utils.bd_requests.logout_request)
         con.commit()
@@ -150,7 +152,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
                 "Заполните все поля", 5000
             )
             return
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         cur = con.cursor()
         result = cur.execute(utils.bd_requests.reg_in_, (login,)).fetchone()
         if result:
@@ -173,7 +175,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.stack.setCurrentIndex(1)
 
     def check_active_session(self):
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         cur = con.cursor()
         date = cur.execute(utils.bd_requests.check_date_).fetchone()
         last_date = None
@@ -235,7 +237,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
             with TemporaryDirectory() as ct_folder:
                 for _, filename in files:
                     source = patient_folder / filename
-                    (Path(ct_folder) / filename).symlink_to(source)
+                    shutil.copyfile(source, Path(ct_folder) / filename)
                 cts, masks, doses, info = prepare_all_data(
                     ct_folder,
                     str(patient_folder / "RS.dcm"),
@@ -295,7 +297,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.show_patient_data(first_ds)
         self.show_dicom(0)
         self.build_projection_views()
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         cur = con.cursor()
         if not cur.execute(
             utils.bd_requests.check_file_, (self.folder,)

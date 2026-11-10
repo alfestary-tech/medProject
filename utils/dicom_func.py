@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPainter, QPen, QPixmap
 
 import utils.bd_requests
+from utils.db_path import get_db_path
 
 
 def get_dicom_files(folder):
@@ -253,7 +254,7 @@ class DicomFunctions:
     def update_last_date(self):
         today = datetime.now(ZoneInfo("Europe/Moscow"))
         date = f"{today.day}.{today.month}.{today.year}"
-        con = sqlite3.connect("data/main.db")
+        con = sqlite3.connect(get_db_path())
         try:
             con.execute(utils.bd_requests.add_date_, (date,))
             con.commit()
