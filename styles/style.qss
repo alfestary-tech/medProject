@@ -15,6 +15,7 @@ QLabel {
 }
 
 QLabel#filesHeader,
+QLabel#mainViewHeader,
 QLabel#frontViewHeader,
 QLabel#sideViewHeader {
     color: #F3F5F6;
@@ -62,6 +63,7 @@ QTabBar::tab:hover:!selected {
     color: #F3F5F6;
 }
 
+QFrame#mainViewFrame,
 QFrame#frontViewFrame,
 QFrame#sideViewFrame,
 QListWidget#fileList {

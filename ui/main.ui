@@ -41,6 +41,39 @@
          <number>12</number>
         </property>
         <item>
+         <layout class="QVBoxLayout" name="mainViewColumn" stretch="0,1">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="mainViewHeader">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Основной срез</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="mainViewFrame">
+            <layout class="QVBoxLayout" name="mainViewLayout">
+             <property name="leftMargin">
+              <number>8</number>
+             </property>
+             <property name="topMargin">
+              <number>8</number>
+             </property>
+             <property name="rightMargin">
+              <number>8</number>
+             </property>
+             <property name="bottomMargin">
+              <number>8</number>
+             </property>
+             <item>
          <widget class="QTabWidget" name="windowList">
           <property name="minimumSize">
            <size>
@@ -336,6 +369,11 @@
            </layout>
           </widget>
          </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QVBoxLayout" name="sideViewsLayout" stretch="0,1,0,1">
@@ -539,8 +577,17 @@
     <addaction name="actionRepeatView" />
     <addaction name="actionConstantView" />
    </widget>
+   <widget class="QMenu" name="menuMainScreen">
+    <property name="title">
+     <string>Основной экран</string>
+    </property>
+    <addaction name="actionMainSlice" />
+    <addaction name="actionSideSlice" />
+    <addaction name="actionFrontSlice" />
+   </widget>
    <addaction name="menuFile" />
    <addaction name="menuView" />
+   <addaction name="menuMainScreen" />
   </widget>
   <action name="actionOpenFolder">
    <property name="text">
@@ -555,6 +602,21 @@
   <action name="actionConstantView">
    <property name="text">
     <string>Постоянный вид</string>
+   </property>
+  </action>
+  <action name="actionMainSlice">
+   <property name="text">
+    <string>Основной срез</string>
+   </property>
+  </action>
+  <action name="actionSideSlice">
+   <property name="text">
+    <string>Боковой срез</string>
+   </property>
+  </action>
+  <action name="actionFrontSlice">
+   <property name="text">
+    <string>Передний срез</string>
    </property>
   </action>
  </widget>

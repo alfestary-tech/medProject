@@ -52,6 +52,7 @@ class DicomReader(QMainWindow):
         self.side_image = None
         self.image_filter = 0
         self.last_image_tab = 0
+        self.main_window = 0
         self.page1.imageLabel.installEventFilter(self)
         self.page1.maskLabel.installEventFilter(self)
         self.page1.doseLabel.installEventFilter(self)
@@ -66,6 +67,9 @@ class DicomReader(QMainWindow):
         self.page1.actionRepeatView.triggered.connect(
             self.show_md_side_views
         )
+        self.page1.actionMainSlice.triggered.connect(self.show_main_slice)
+        self.page1.actionSideSlice.triggered.connect(self.show_side_slice)
+        self.page1.actionFrontSlice.triggered.connect(self.show_front_slice)
         self.page1.sliceSlider.setMinimum(1)
         self.page1.sliceSlider.setMaximum(1)
         self.page1.sliceCounter.setText("Срез: 0 / 0")
@@ -322,6 +326,70 @@ class DicomReader(QMainWindow):
         self.image_filter = 0
         if self.cts is not None:
             self.build_projection_views()
+
+    def show_main_slice(self):
+        self.main_window = 0
+        self.move_main_window_widgets()
+
+    def show_side_slice(self):
+        self.main_window = 1
+        self.move_main_window_widgets()
+
+    def show_front_slice(self):
+        self.main_window = 2
+        self.move_main_window_widgets()
+
+    def move_main_window_widgets(self):
+        tab = self.page1.windowList
+        front = self.page1.firstSideLabel
+        side = self.page1.secondSideLabel
+
+        self.page1.mainViewLayout.removeWidget(tab)
+        self.page1.mainViewLayout.removeWidget(front)
+        self.page1.mainViewLayout.removeWidget(side)
+        self.page1.frontViewLayout.removeWidget(tab)
+        self.page1.frontViewLayout.removeWidget(front)
+        self.page1.frontViewLayout.removeWidget(side)
+        self.page1.sideViewLayout.removeWidget(tab)
+        self.page1.sideViewLayout.removeWidget(front)
+        self.page1.sideViewLayout.removeWidget(side)
+
+        if self.main_window == 0:
+            big_widget = tab
+            front_widget = front
+            side_widget = side
+            self.page1.mainViewHeader.setText("Основной срез")
+            self.page1.frontViewHeader.setText("Вид спереди")
+            self.page1.sideViewHeader.setText("Вид сбоку")
+        elif self.main_window == 1:
+            big_widget = side
+            front_widget = tab
+            side_widget = front
+            self.page1.mainViewHeader.setText("Вид сбоку")
+            self.page1.frontViewHeader.setText("Основной срез")
+            self.page1.sideViewHeader.setText("Вид спереди")
+        else:
+            big_widget = front
+            front_widget = tab
+            side_widget = side
+            self.page1.mainViewHeader.setText("Вид спереди")
+            self.page1.frontViewHeader.setText("Основной срез")
+            self.page1.sideViewHeader.setText("Вид сбоку")
+
+        if big_widget == tab:
+            tab.setMinimumSize(500, 500)
+        else:
+            tab.setMinimumSize(0, 0)
+
+        self.page1.mainViewLayout.addWidget(big_widget)
+        self.page1.frontViewLayout.addWidget(front_widget)
+        self.page1.sideViewLayout.addWidget(side_widget)
+        self.page1.viewersLayout.setStretch(0, 9)
+        self.page1.viewersLayout.setStretch(1, 4)
+
+        tab.show()
+        front.show()
+        side.show()
 
     def show_md_side_views(self):
         self.image_filter = 1
