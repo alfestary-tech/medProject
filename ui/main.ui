@@ -194,177 +194,34 @@
             <string>Данные пациента</string>
            </attribute>
            <layout class="QVBoxLayout" name="metadataLayout">
-            <property name="spacing">
-             <number>20</number>
-            </property>
             <property name="leftMargin">
-             <number>28</number>
+             <number>16</number>
             </property>
             <property name="topMargin">
-             <number>28</number>
+             <number>16</number>
             </property>
             <property name="rightMargin">
-             <number>28</number>
+             <number>16</number>
             </property>
             <property name="bottomMargin">
-             <number>28</number>
+             <number>16</number>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="patientNameLayout">
-              <property name="spacing">
-               <number>4</number>
+             <widget class="QTreeWidget" name="studyTree">
+              <property name="headerHidden">
+               <bool>true</bool>
               </property>
-              <item>
-               <widget class="QLabel" name="patientName_text">
-                <property name="text">
-                 <string>Имя пациента</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="patientName">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>36</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>—</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-                <property name="textInteractionFlags">
-                 <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="patientIDLayout">
-              <property name="spacing">
-               <number>4</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="patientID_text">
-                <property name="text">
-                 <string>ID пациента</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="patientID">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>36</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>—</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-                <property name="textInteractionFlags">
-                 <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="patientBDLayout">
-              <property name="spacing">
-               <number>4</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="patientBD_text">
-                <property name="text">
-                 <string>Дата рождения</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="patientBD">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>36</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>—</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-                <property name="textInteractionFlags">
-                 <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QVBoxLayout" name="modalityLayout">
-              <property name="spacing">
-               <number>4</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="modality_text">
-                <property name="text">
-                 <string>Модальность</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="modality">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>36</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>—</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-                <property name="textInteractionFlags">
-                 <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="metadataBottomSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
+              <column>
+               <property name="text">
+                <string>Поле</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Значение</string>
+               </property>
+              </column>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -585,9 +442,15 @@
     <addaction name="actionSideSlice" />
     <addaction name="actionFrontSlice" />
    </widget>
+   <widget class="QMenu" name="menuContourEdit">
+    <property name="title">
+     <string>Редактирование контура</string>
+    </property>
+   </widget>
    <addaction name="menuFile" />
    <addaction name="menuView" />
    <addaction name="menuMainScreen" />
+   <addaction name="menuContourEdit" />
   </widget>
   <action name="actionOpenFolder">
    <property name="text">

@@ -6,7 +6,7 @@ from pathlib import Path
 
 def get_db_path():
     if not getattr(sys, "frozen", False):
-        return Path("data/main.db")
+        return Path(__file__).resolve().parent.parent / "data" / "main.db"
 
     folder = Path(os.environ["LOCALAPPDATA"]) / "DicomViewer"
     folder.mkdir(parents=True, exist_ok=True)

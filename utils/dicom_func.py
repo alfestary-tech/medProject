@@ -7,6 +7,7 @@ import numpy as np
 import pydicom
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPainter, QPen, QPixmap
+from PyQt6.QtWidgets import QTreeWidgetItem
 
 import utils.bd_requests
 from utils.db_path import get_db_path
@@ -41,67 +42,93 @@ class DicomFunctions:
 
     def show_main_slice(self):
         self.main_window = 0
-        self.move_main_window_widgets()
+        self.move_image_labels()
 
     def show_side_slice(self):
         self.main_window = 1
-        self.move_main_window_widgets()
+        self.move_image_labels()
 
     def show_front_slice(self):
         self.main_window = 2
-        self.move_main_window_widgets()
+        self.move_image_labels()
 
-    def move_main_window_widgets(self):
+    def move_image_labels(self):
         tab = self.page1.windowList
+        image = self.page1.imageLabel
+        mask = self.page1.maskLabel
+        dose = self.page1.doseLabel
         front = self.page1.firstSideLabel
         side = self.page1.secondSideLabel
 
-        self.page1.mainViewLayout.removeWidget(tab)
-        self.page1.mainViewLayout.removeWidget(front)
-        self.page1.mainViewLayout.removeWidget(side)
-        self.page1.frontViewLayout.removeWidget(tab)
-        self.page1.frontViewLayout.removeWidget(front)
-        self.page1.frontViewLayout.removeWidget(side)
-        self.page1.sideViewLayout.removeWidget(tab)
-        self.page1.sideViewLayout.removeWidget(front)
-        self.page1.sideViewLayout.removeWidget(side)
+        image_layout = self.page1.imageSliceLayout
+        mask_layout = self.page1.maskSliceLayout
+        dose_layout = self.page1.doseSliceLayout
+        front_layout = self.page1.frontViewLayout
+        side_layout = self.page1.sideViewLayout
 
-        if self.main_window == 0:
-            big_widget = tab
-            front_widget = front
-            side_widget = side
-            self.page1.mainViewHeader.setText("Основной срез")
-            self.page1.frontViewHeader.setText("Вид спереди")
-            self.page1.sideViewHeader.setText("Вид сбоку")
-        elif self.main_window == 1:
-            big_widget = side
-            front_widget = tab
-            side_widget = front
-            self.page1.mainViewHeader.setText("Вид сбоку")
-            self.page1.frontViewHeader.setText("Основной срез")
-            self.page1.sideViewHeader.setText("Вид спереди")
-        else:
-            big_widget = front
-            front_widget = tab
-            side_widget = side
-            self.page1.mainViewHeader.setText("Вид спереди")
-            self.page1.frontViewHeader.setText("Основной срез")
-            self.page1.sideViewHeader.setText("Вид сбоку")
+        layouts = (
+            self.page1.mainViewLayout,
+            image_layout,
+            mask_layout,
+            dose_layout,
+            front_layout,
+            side_layout,
+        )
 
-        if big_widget == tab:
-            tab.setMinimumSize(500, 500)
-        else:
-            tab.setMinimumSize(0, 0)
+        for widget in (tab, image, mask, dose, front, side):
+            for layout in layouts:
+                layout.removeWidget(widget)
 
-        self.page1.mainViewLayout.addWidget(big_widget)
-        self.page1.frontViewLayout.addWidget(front_widget)
-        self.page1.sideViewLayout.addWidget(side_widget)
-        self.page1.viewersLayout.setStretch(0, 9)
-        self.page1.viewersLayout.setStretch(1, 4)
+        self.page1.mainViewLayout.addWidget(tab)
+        image_layout.addWidget(image)
+        mask_layout.addWidget(mask)
+        dose_layout.addWidget(dose)
+        front_layout.addWidget(front)
+        side_layout.addWidget(side)
 
-        tab.show()
-        front.show()
-        side.show()
+        tab.setMinimumSize(500, 500)
+        index = tab.currentIndex()
+
+        if index in (0, 1, 2):
+            main_labels = (image, mask, dose)
+            tab_layouts = (image_layout, mask_layout, dose_layout)
+            main_label = main_labels[index]
+            tab_layout = tab_layouts[index]
+
+            if self.main_window == 0:
+                self.page1.mainViewHeader.setText("Основной срез")
+                self.page1.frontViewHeader.setText("Вид спереди")
+                self.page1.sideViewHeader.setText("Вид сбоку")
+            elif self.main_window == 1:
+                tab_layout.removeWidget(main_label)
+                front_layout.removeWidget(front)
+                side_layout.removeWidget(side)
+
+                tab_layout.addWidget(side)
+                front_layout.addWidget(main_label)
+                side_layout.addWidget(front)
+
+                self.page1.mainViewHeader.setText("Вид сбоку")
+                self.page1.frontViewHeader.setText("Основной срез")
+                self.page1.sideViewHeader.setText("Вид спереди")
+            elif self.main_window == 2:
+                tab_layout.removeWidget(main_label)
+                front_layout.removeWidget(front)
+                side_layout.removeWidget(side)
+
+                tab_layout.addWidget(front)
+                front_layout.addWidget(main_label)
+                side_layout.addWidget(side)
+
+                self.page1.mainViewHeader.setText("Вид спереди")
+                self.page1.frontViewHeader.setText("Основной срез")
+                self.page1.sideViewHeader.setText("Вид сбоку")
+
+        for widget in (tab, image, mask, dose, front, side):
+            widget.show()
+
+        self.update_slice_pixmap()
+        self.update_projection_views()
 
     def show_md_side_views(self):
         self.image_filter = 1
@@ -111,6 +138,7 @@ class DicomFunctions:
     def opened_tab(self, index):
         if index in (0, 1, 2):
             self.last_image_tab = index
+        self.move_image_labels()
         if self.image_filter == 1 and self.cts is not None:
             self.build_projection_views()
 
@@ -154,7 +182,11 @@ class DicomFunctions:
     def show_dicom(self, index):
         ct = self.cts[index]
         ct_min, ct_max = np.percentile(ct, (1, 99))
-        mask = self.masks[index].any(axis=0).astype(np.uint8) * 255
+        if self.contour_index is None:
+            mask = self.masks[index].any(axis=0)
+        else:
+            mask = self.masks[index, self.contour_index]
+        mask = mask.astype(np.uint8) * 255
 
         self.slice_pixmap = QPixmap.fromImage(
             self.array_to_image(ct, ct_min, ct_max)
@@ -170,7 +202,10 @@ class DicomFunctions:
         volume = self.cts
         if self.image_filter == 1:
             if self.last_image_tab == 1:
-                volume = self.masks.any(axis=1)
+                if self.contour_index is None:
+                    volume = self.masks.any(axis=1)
+                else:
+                    volume = self.masks[:, self.contour_index]
             elif self.last_image_tab == 2:
                 volume = self.doses
 
@@ -235,21 +270,142 @@ class DicomFunctions:
 
     def show_patient_data(self, ds):
         if ds is None:
-            self.page1.patientName.setText("—")
-            self.page1.patientID.setText("—")
-            self.page1.patientBD.setText("—")
-            self.page1.modality.setText("—")
+            self.patient_data = {
+                "Имя пациента": "—",
+                "ID пациента": "—",
+                "Дата рождения": "—",
+                "Модальность": "—",
+            }
             return
-        self.page1.patientName.setText(str(ds.get("PatientName") or "—"))
-        self.page1.patientID.setText(str(ds.get("PatientID") or "—"))
+
         birth_date = str(ds.get("PatientBirthDate") or "")
         if len(birth_date) == 8 and birth_date.isdigit():
-            self.page1.patientBD.setText(
+            birth_date = (
                 f"{birth_date[6:8]}.{birth_date[4:6]}.{birth_date[:4]}"
             )
         else:
-            self.page1.patientBD.setText("—")
-        self.page1.modality.setText(str(ds.get("Modality") or "—"))
+            birth_date = "—"
+
+        self.patient_data = {
+            "Имя пациента": str(ds.get("PatientName") or "—"),
+            "ID пациента": str(ds.get("PatientID") or "—"),
+            "Дата рождения": birth_date,
+            "Модальность": str(ds.get("Modality") or "—"),
+        }
+
+    def show_study_data(self, info):
+        self.study_info = info
+        tree = self.page1.studyTree
+        tree.clear()
+        tree.setColumnWidth(0, 260)
+
+        patient = QTreeWidgetItem(tree, ["Данные пациента"])
+        for name, value in self.patient_data.items():
+            QTreeWidgetItem(patient, [name, value])
+        patient.setExpanded(True)
+
+        sections = (
+            ("КТ", "ct"),
+            ("Контуры", "roi_channels"),
+            ("Доза", "dose"),
+            ("План", "plan"),
+        )
+        for title, key in sections:
+            section = QTreeWidgetItem(tree, [title])
+            if info is None:
+                continue
+            if key == "roi_channels":
+                for contour in info[key].values():
+                    number = contour["roi_number"]
+                    name = contour["name"]
+                    QTreeWidgetItem(section, [f"{number} — {name}"])
+            else:
+                for name, value in info[key].items():
+                    self.add_data_row(section, name, value)
+
+    def add_data_row(self, parent, name, value):
+        names = {
+            "frame_uid": "Идентификатор системы координат",
+            "series_uid": "Идентификатор серии",
+            "positions": "Позиции срезов",
+            "pixel_spacing": "Размер пикселя",
+            "patient_pos": "Положение пациента",
+            "orientation": "Ориентация изображения",
+            "offset": "Смещения срезов",
+            "dose": "Доза",
+            "DVH": "Гистограммы доза–объём",
+            "dose_reference": "Дозовые ориентиры",
+            "fraction_group": "Группы фракций",
+            "beam_sequence": "Пучки",
+            "control_points": "Контрольные точки",
+            "units": "Единицы измерения",
+            "type": "Тип",
+            "sum_type": "Способ суммирования",
+            "plan_uid": "Идентификатор плана",
+            "struct_uid": "Идентификатор контуров",
+            "structure_uid": "Идентификатор контуров",
+            "sop": "Идентификатор плана",
+            "contribution_type": "Тип вклада контура",
+            "scaling": "Масштаб дозы",
+            "volume_units": "Единицы объёма",
+            "bins": "Число интервалов",
+            "data": "Значения",
+            "min_dose": "Минимальная доза",
+            "max_dose": "Максимальная доза",
+            "dose_struct_type": "Тип дозового ориентира",
+            "dose_type": "Тип дозы",
+            "delivery_max_dose": "Максимальная подведённая доза",
+            "target_prescription_dose": "Предписанная доза",
+            "target_max_dose": "Максимальная доза для цели",
+            "point_coords": "Координаты точки",
+            "num_fracts": "Число фракций",
+            "num_beans": "Число пучков",
+            "beams": "Пучки",
+            "meterset": "Показание счётчика",
+            "beam_type": "Тип пучка",
+            "rad_type": "Тип излучения",
+            "delivary_type": "Способ облучения",
+            "beam_num": "Номер пучка",
+            "reg_imgs": "Связанные изображения",
+            "meterset_weight": "Доля показания счётчика",
+            "isocenter_pos": "Положение изоцентра",
+            "dose_ref": "Дозовые ориентиры",
+            "gantry": "Гантри",
+            "patient_sup": "Опора пациента",
+            "table": "Стол",
+            "top": "Столешница",
+            "eccentric": "Эксцентрическое вращение",
+            "vertical": "Вертикальное положение",
+            "longitudinal": "Продольное положение",
+            "lateral": "Поперечное положение",
+            "pitch": "Наклон",
+            "angle": "Угол",
+            "direction": "Направление",
+            "pos": "Положение",
+        }
+        title = names.get(str(name), str(name))
+        if isinstance(value, (dict, list, tuple, np.ndarray)):
+            item = QTreeWidgetItem(parent, [title, f"Элементов: {len(value)}"])
+            if len(value):
+                item.setData(0, Qt.ItemDataRole.UserRole, value)
+                QTreeWidgetItem(item, [""])
+        else:
+            text = "—" if value is None else str(value)
+            item = QTreeWidgetItem(parent, [title, text])
+            item.setToolTip(1, text)
+
+    def open_data_row(self, item):
+        value = item.data(0, Qt.ItemDataRole.UserRole)
+        if value is None:
+            return
+        item.takeChildren()
+        if isinstance(value, dict):
+            for name, child in value.items():
+                self.add_data_row(item, name, child)
+        else:
+            for index, child in enumerate(value, start=1):
+                self.add_data_row(item, index, child)
+        item.setData(0, Qt.ItemDataRole.UserRole, None)
 
     def update_last_date(self):
         today = datetime.now(ZoneInfo("Europe/Moscow"))

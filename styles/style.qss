@@ -92,24 +92,27 @@ QListWidget#fileList::item:selected {
     color: #FFFFFF;
 }
 
-QWidget#metaData QLabel#patientName_text,
-QWidget#metaData QLabel#patientID_text,
-QWidget#metaData QLabel#patientBD_text,
-QWidget#metaData QLabel#modality_text {
-    color: #B7C0C7;
-    font-size: 12px;
-    font-weight: 600;
+QTreeWidget#studyTree {
+    background: #363B40;
+    color: #F3F5F6;
+    border: 1px solid #626C75;
+    border-radius: 10px;
+    outline: none;
+    font-size: 13px;
 }
 
-QWidget#metaData QLabel#patientName,
-QWidget#metaData QLabel#patientID,
-QWidget#metaData QLabel#patientBD,
-QWidget#metaData QLabel#modality {
-    color: #F3F5F6;
-    font-size: 15px;
-    font-weight: 500;
-    border-bottom: 1px solid #626C75;
-    padding: 3px 5px 8px;
+QTreeWidget#studyTree::item {
+    padding: 7px 8px;
+    border-bottom: 1px solid #424950;
+}
+
+QTreeWidget#studyTree::item:hover {
+    background: #424950;
+}
+
+QTreeWidget#studyTree::item:selected {
+    background: #555F68;
+    color: #FFFFFF;
 }
 
 QLabel#sliceCounter {

@@ -45,14 +45,19 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.front_image = None
         self.side_image = None
         self.image_filter = 0
+        self.contour_index = None
         self.last_image_tab = 0
         self.main_window = 0
+        self.study_info = None
+        self.patient_data = {}
+        self.page1.studyTree.itemExpanded.connect(self.open_data_row)
+        self.show_patient_data(None)
+        self.show_study_data(None)
         self.page1.imageLabel.installEventFilter(self)
         self.page1.maskLabel.installEventFilter(self)
         self.page1.doseLabel.installEventFilter(self)
         self.page1.firstSideLabel.installEventFilter(self)
         self.page1.secondSideLabel.installEventFilter(self)
-        self.page1.windowList.currentChanged.connect(self.update_slice_pixmap)
         self.page1.windowList.currentChanged.connect(self.opened_tab)
         self.page1.actionOpenFolder.triggered.connect(self.load_folder)
         self.page1.actionConstantView.triggered.connect(
@@ -75,6 +80,8 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.page1.logOutButton.clicked.connect(self.log_out)
         self.page1.fileList.itemClicked.connect(self.open_file)
         self.page1.folderButton.clicked.connect(self.show_folder_path)
+        self.page1.menuContourEdit.triggered.connect(self.select_contour)
+        self.update_contour_menu()
         self.ph = PasswordHasher()
         self.check_active_session()
         con = sqlite3.connect(get_db_path())
@@ -209,6 +216,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.page1.doseLabel.clear()
         self.clear_projection_views()
         self.show_patient_data(None)
+        self.show_study_data(None)
         self.page1.sliceCounter.setText("Срез: 0 / 0")
         self.list_files = []
         self.folder = ""
@@ -218,6 +226,7 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         self.page1.sliceSlider.blockSignals(signals_blocked)
         self.page1.sliceSlider.setEnabled(False)
         self.page1.fileList.clear()
+        self.update_contour_menu()
         self.stack.setCurrentIndex(1)
 
     def load_folder(self):
@@ -291,10 +300,12 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
 
         self.page1.fileList.clear()
         self.page1.fileList.addItems([file for _, file in self.list_files])
+        self.update_contour_menu(info["roi_channels"])
         self.page1.sliceCounter.setText(
             f"Срез: 1 / {len(self.list_files)}"
         )
         self.show_patient_data(first_ds)
+        self.show_study_data(info)
         self.show_dicom(0)
         self.build_projection_views()
         con = sqlite3.connect(get_db_path())
@@ -310,6 +321,30 @@ class DicomReader(utils.dicom_func.DicomFunctions, QMainWindow):
         cur.execute(utils.bd_requests.action_add_, (self.folder,))
         con.commit()
         con.close()
+
+    def update_contour_menu(self, roi_channels=None):
+        self.contour_index = None
+        menu = self.page1.menuContourEdit
+        menu.clear()
+        menu.addAction("Общий")
+        if roi_channels:
+            for channel, contour in roi_channels.items():
+                action = menu.addAction(
+                    f'{contour["roi_number"]} - {contour["name"]}'
+                )
+                action.setData(int(channel))
+
+    def select_contour(self, action):
+        self.contour_index = action.data()
+
+        if self.masks is None:
+            return
+
+        index = self.page1.sliceSlider.value() - 1
+        self.show_dicom(index)
+
+        if self.image_filter == 1 and self.last_image_tab == 1:
+            self.build_projection_views()
 
     def show_folder_path(self):
         self.statusBar().showMessage(
