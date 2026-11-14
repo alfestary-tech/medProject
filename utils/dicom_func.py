@@ -40,6 +40,11 @@ class DicomFunctions:
         if self.cts is not None:
             self.build_projection_views()
 
+    def show_md_side_views(self):
+        self.image_filter = 1
+        if self.cts is not None:
+            self.build_projection_views()
+
     def show_main_slice(self):
         self.main_window = 0
         self.move_image_labels()
@@ -129,11 +134,6 @@ class DicomFunctions:
 
         self.update_slice_pixmap()
         self.update_projection_views()
-
-    def show_md_side_views(self):
-        self.image_filter = 1
-        if self.cts is not None:
-            self.build_projection_views()
 
     def opened_tab(self, index):
         if index in (0, 1, 2):
